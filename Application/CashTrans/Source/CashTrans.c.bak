@@ -1,0 +1,595 @@
+#include "CashTrans.h"
+#include "global.h"
+#include "define.h"
+#include "Screen.h"
+
+#ifdef MAKE_CASH_CR
+
+unsigned short RevCreLen;
+unsigned short RevCreDataLen;
+unsigned char RevCreFlg;
+unsigned char RevCreBuf[128];
+unsigned char SndCreBuf[128];
+
+unsigned char CreCommand;
+unsigned char CrState;
+unsigned char CrePreCommand;
+
+// Bellow LLLLA
+// For Cash Trans Process PowerDown Or Not
+// Only PowerDown After Send The Record To POS
+unsigned char CashSendRecordStart = 0;
+unsigned char CRESendRecord = 0;
+unsigned char CrEscOrNoEsc = 0;
+// Upper LLLLA
+
+enum CRE_COMMAND_STATUS CreStatus;
+
+Tmr *pCreTmr;
+Tmr *pCrWait;
+Tmr *pCrEscTime;
+
+void ComCrRev(unsigned char *s,unsigned int len,unsigned char err)
+{
+	unsigned char tmp;
+	
+	if(!err)
+	{
+		while(len--)
+		{
+			tmp = *s;
+			if(!RevCreFlg)
+			{
+				if(RevCreLen == 0)
+				{
+					if(tmp == STX_C)
+					{
+						RevCreBuf[RevCreLen++] = tmp;
+					}
+					else
+					{
+						RevCreDataLen = 0;
+						RevCreLen = 0;
+					}
+				}
+				else if(RevCreLen == 1)
+				{
+					if(((tmp & 0xf0) < 0xa0) && ((tmp & 0x0f) < 0x0a))
+					{
+						RevCreDataLen = tmp >> 4;
+						RevCreDataLen *= 10;
+						RevCreDataLen += (tmp & 0x0f);
+						RevCreBuf[RevCreLen++] = tmp;
+					}
+					else
+					{
+						RevCreLen = 0;
+						RevCreDataLen = 0;
+					}
+				}
+				else if((RevCreLen < (RevCreDataLen + 2)) && (RevCreDataLen != 0))
+				{
+					RevCreBuf[RevCreLen++] = tmp;
+				}
+				else if((RevCreLen == (RevCreDataLen + 2)) && (RevCreDataLen != 0))
+				{
+					if(tmp == ETX_C)
+					{
+						RevCreBuf[RevCreLen++] = tmp;
+					}
+					else
+					{
+						RevCreLen = 0;
+						RevCreDataLen = 0;
+					}
+				}
+				else if((RevCreLen == (RevCreDataLen + 3)) && (RevCreDataLen != 0))
+				{
+					RevCreBuf[RevCreLen++] = tmp;
+					RevCreFlg = 1;
+					RevCreDataLen = 0;
+				}
+				else
+				{
+					RevCreLen = 0;
+					RevCreDataLen = 0;
+				}
+			}
+			s++;
+		}
+	}
+}
+
+void ResposneTimeOut(void)
+{
+	CreStatus = CRE_Command_ResposeTimeOut;
+}
+
+void ComCrSnded(unsigned char *s,unsigned int len,unsigned char err)
+{
+	DbugSerial.pUsartHw->DBGU_IER = AT91C_US_RXRDY;
+	if(CreCommand == SND_RECORD)
+	{
+		CreStatus = CRE_Command_WaitRespose;
+		pCreTmr = CreateTimer(TIMER_ONE_DELETE,WAIT_RESPONSE_TIME,ResposneTimeOut);
+
+		// Bellow LLLLA
+		if( CashSendRecordStart == 1 )
+		{
+			CashSendRecordStart = 0;
+			CRESendRecord = 0;
+		}
+
+	}
+	else if(CreCommand == CR_INPUT)
+	{
+		CreStatus = CRE_Command_WaitRespose;
+		pCreTmr = CreateTimer(TIMER_ONE_DELETE,WAIT_RESPONSE_TIME,ResposneTimeOut);
+	}
+	else
+	{
+		CreStatus = CRE_Command_Rev;
+	}
+
+}
+
+
+void InitCashProcess( void )
+{
+	unsigned int mode;
+    
+    PIO_SetPeripheralA(dbug_usart.pio,dbug_usart.mask,ENABLE_PULLUP);
+    mode = AT91C_US_PAR_NONE | AT91C_US_CHMODE_NORMAL;
+    DbugUsart_Configure(AT91C_BASE_DBGU,mode,DBUUG_USART_BAUD_INT,MAIN_MCK);
+    PDC_DisableRx((AT91PS_PDC)(&AT91C_BASE_DBGU->DBGU_RPR));
+    PDC_DisableTx((AT91PS_PDC)(&AT91C_BASE_DBGU->DBGU_TPR));
+    //INT
+    DBUG_US_EnableIt(AT91C_BASE_DBGU, 
+    		AT91C_US_RXRDY);
+    AT91C_BASE_DBGU->DBGU_CR = AT91C_US_RXEN | AT91C_US_TXEN;
+	DbugSerial.pUsartHw = AT91C_BASE_DBGU;
+	DbugSerial.receviceback = ComCrRev;
+	DbugSerial.sendback = ComCrSnded;
+}
+
+// Bellow LLLLA
+//
+//void DbugCashSentOver(unsigned char *s,unsigned int len,unsigned char error)
+//{
+//	// While Power Down Issued, Wait Until Record Sent Over
+//	if( CashSendRecordStart == 1 )
+//	{
+//    	CashSendRecordStart = 0;
+//		CRESendRecord = 0;
+//	}
+//}
+// Upper LLLLA
+
+
+void CrePolling_Dispose(void)
+{
+	unsigned char len;
+	unsigned short year;
+	
+	CrState = 0;
+	CrePreCommand = 0;
+	Cash_CR_Buf.CashType = RevCreBuf[3];
+	len = strlen((char *)(&RevCreBuf[4]));
+	memcpy(Cash_CR_Buf.CashVersion,&RevCreBuf[4],len + 1);
+	if(ProcExchange[PROCESS_CR][PROCESS_CASH] & CASH_TRANS_RECORD)
+	{
+		SndCreBuf[0] = STX_C;
+		SndCreBuf[1] = 0x97;
+		SndCreBuf[2] = SND_RECORD;
+		memcpy(&SndCreBuf[3],Cash_CR_Buf.CashTransRecord,96);
+		SndCreBuf[99] = ETX_C;
+		SndCreBuf[100] = CrcEor(SndCreBuf,100);
+		CreCommand = SND_RECORD;
+		WriteToDBUG_USART(SndCreBuf,101);
+		CreStatus = CRE_Command_Sending;
+
+		// Start Send Record, LLLLA
+		CashSendRecordStart = 1;
+	}
+	else if(ProcExchange[PROCESS_CR][PROCESS_CASH] & CASH_AUTH_CODE)
+	{
+		len = Cash_CR_Buf.CashAuthCode[0];
+		SndCreBuf[0] = STX_C; 
+		SndCreBuf[1] = len + 2;		
+		SndCreBuf[2] = CR_INPUT;
+		memcpy(&SndCreBuf[3],Cash_CR_Buf.CashAuthCode,len + 1);
+		SndCreBuf[len + 4] = ETX_C;
+		SndCreBuf[len + 5] = CrcEor(SndCreBuf,len + 5);
+		CreCommand = CR_INPUT;
+		WriteToDBUG_USART(SndCreBuf,len + 6);
+		CreStatus = CRE_Command_Sending;
+	}
+	else
+	{
+		SndCreBuf[0] = STX_C;
+		SndCreBuf[1] = 8;
+		SndCreBuf[2] = POLLING;
+		year = ShortEndianConvert(SysBCDTime.year);
+		memcpy(&SndCreBuf[3],(unsigned char *)(&year),2);
+		memcpy(&SndCreBuf[5],&SysBCDTime.month,5);
+		SndCreBuf[10] = ETX_C;
+		SndCreBuf[11] = CrcEor(SndCreBuf,11);
+		CreCommand = POLLING;
+		WriteToDBUG_USART(SndCreBuf,12);
+		CreStatus = CRE_Command_Sending;
+	}
+		
+}
+
+void WaitCrTimeOut(void)
+{
+	CreStatus = CRE_Command_Rev;
+}
+
+void CrEscTimeOut(void)
+{
+	CrEscOrNoEsc = 1;
+	ProcExchange[PROCESS_CASH][PROCESS_CR] |= CASH_KEY_CANCELLED;
+}
+
+void CreEngross_Dispose(void)
+{
+	Cash_CR_Buf.CashKeyNozzleNumber = RevCreBuf[3];
+	if(!CrePreCommand)
+	{
+		ProcExchange[PROCESS_CASH][PROCESS_CR] |= CASH_KEY_PRESSED;
+		CrePreCommand = 1;
+	}
+	CreStatus = CRE_Command_WaitCr;
+	if(ProcExchange[PROCESS_CR][PROCESS_CASH] & CASH_KEY_PRESSED)
+	{
+		if(pCrWait != (Tmr *)0)
+		{
+			DeleteTimer(pCrWait);
+			pCrWait = (Tmr *)0;
+		}
+		SndCreBuf[0] = STX_C;
+		SndCreBuf[1] = 6;
+		SndCreBuf[2] = ENGROSS;
+		SndCreBuf[3] = Cash_CR_Buf.CashCard_Flag;
+		SndCreBuf[4] = Cash_CR_Buf.CashKeyNozzleNumber;
+		SndCreBuf[5] = Cash_CR_Buf.CashNozzleNumber;
+		memcpy(&SndCreBuf[6],Cash_CR_Buf.CashGradeNumber,2);
+		SndCreBuf[8] = ETX_C;
+		SndCreBuf[9] = CrcEor(SndCreBuf,9);
+		CreCommand = ENGROSS;
+		WriteToDBUG_USART(SndCreBuf,10);
+		CreStatus = CRE_Command_Sending;
+		ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_KEY_PRESSED);
+		CrState = 1;
+		CrePreCommand = 0;
+		CrEscOrNoEsc = 0;
+		if(!Cash_CR_Buf.CashCard_Flag)
+		{
+			if(pCrEscTime != (Tmr *)0)
+			{
+				DeleteTimer(pCrEscTime);
+				pCrEscTime = (Tmr *)0;
+			}
+			pCrEscTime = CreateTimer(TIMER_ONE,60 * 1000,CrEscTimeOut);
+		}
+	}
+	else if(CrState == 1)
+	{
+		if(pCrWait != (Tmr *)0)
+		{
+			DeleteTimer(pCrWait);
+			pCrWait = (Tmr *)0;
+		}
+		SndCreBuf[0] = STX_C;
+		SndCreBuf[1] = 6;
+		SndCreBuf[2] = ENGROSS;
+		SndCreBuf[3] = Cash_CR_Buf.CashCard_Flag;
+		SndCreBuf[4] = Cash_CR_Buf.CashKeyNozzleNumber;
+		SndCreBuf[5] = Cash_CR_Buf.CashNozzleNumber;
+		memcpy(&SndCreBuf[6],Cash_CR_Buf.CashGradeNumber,2);
+		SndCreBuf[8] = ETX_C;
+		SndCreBuf[9] = CrcEor(SndCreBuf,9);
+		CreCommand = ENGROSS;
+		WriteToDBUG_USART(SndCreBuf,10);
+		CreStatus = CRE_Command_Sending;
+		ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_KEY_PRESSED);
+		CrePreCommand = 0;
+		CrEscOrNoEsc = 0;
+		if(!Cash_CR_Buf.CashCard_Flag)
+		{
+			if(pCrEscTime != (Tmr *)0)
+			{
+				DeleteTimer(pCrEscTime);
+				pCrEscTime = (Tmr *)0;
+			}
+			pCrEscTime = CreateTimer(TIMER_ONE,60 * 1000,CrEscTimeOut);
+		}
+	}
+	else
+	{
+		pCrWait = CreateTimer(TIMER_ONE_DELETE,50 * WAIT_RESPONSE_TIME,WaitCrTimeOut);
+	}
+}
+
+void CreSndRecord_Dispose(void)
+{
+	CreStatus = CRE_Command_Rev;
+	DeleteTimer(pCreTmr);
+	ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_TRANS_RECORD);
+}
+
+void CreWarning_Dispose(void)
+{
+	unsigned short WarningCode;
+	unsigned char len;
+	
+	memcpy((unsigned char *)(&WarningCode),&RevCreBuf[3],2);
+	WarningCode = ShortEndianConvert(WarningCode);
+
+	// liuzg
+	// LLLLO
+	len = strlen((char *)(&RevCreBuf[5]));
+	if(len < RevCreBuf[1])
+	{
+		//memcpy(CustomMsg0,&RevCreBuf[5],len + 1);
+		memcpy(InfoLine,&RevCreBuf[5],len + 1);
+		FillInfoMsg(M_InfoLine,0,0);
+	}
+	// LLLLO End
+	//liuzg End
+	
+	/*
+	// LLLLA
+	memset( InfoLine, 0x00, sizeof( InfoLine ));
+	len = strlen((char *)(&RevCreBuf[5]));
+	
+	if( len > 2 )
+	{
+		// Not Include 0xFB Anc XorC
+    	len -= 2;
+
+		if( len > 18 )
+		{
+			len = 18;
+		}
+
+		memcpy( InfoLine, &RevCreBuf[5], len );
+		FillInfoMsg( M_InfoLine, 0, 0 );
+	}
+	// LLLLA End
+	*/
+
+	if(WarningCode < 0x8000)
+	{
+		ProcExchange[PROCESS_CASH][PROCESS_CR] |= CASH_KEY_CANCELLED;
+	}
+	SndCreBuf[0] = STX_C;
+	SndCreBuf[1] = 1;
+	SndCreBuf[2] = WARNING;
+	SndCreBuf[3] = ETX_C;
+	SndCreBuf[4] = CrcEor(SndCreBuf,4);
+	CreCommand = WARNING;
+	WriteToDBUG_USART(SndCreBuf,5);
+	CreStatus = CRE_Command_Sending;
+}
+
+void CreCrInput_Dispose(void)
+{
+	CreStatus = CRE_Command_Rev;
+	DeleteTimer(pCreTmr);
+	ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_AUTH_CODE);
+}
+
+void CreAuthCr_Dispose(void)
+{
+	//20120719 liuzg start	--for POS to print ticket
+	unsigned char len;
+	
+	len = RevCreBuf[1];
+	//20120719 liuzg end
+	Cash_CR_Buf.CashAuthCode[0] = 5;
+	memcpy(&Cash_CR_Buf.CashAuthCode[1],&RevCreBuf[6],5);
+	memcpy(&Cash_CR_Buf.CashTotal,&RevCreBuf[11],4);
+	//20120719 liuzg start	--for POS to print ticket
+	CashFromPosUnit = 0;
+	if(len == 0x14)
+	{
+		CashFromPosUnit = RevCreBuf[15];
+	}
+	//20120719 liuzg end
+	if(!CrEscOrNoEsc)
+	{
+		ProcExchange[PROCESS_CASH][PROCESS_CR] |= CASH_TOTAL;
+		SndCreBuf[3] = 0;
+		StopTimer(pCrEscTime);
+	}
+	else
+	{
+		SndCreBuf[3] = 1;
+	}
+	SndCreBuf[0] = STX_C;
+	SndCreBuf[1] = 2;
+	SndCreBuf[2] = AUTH_CR;
+	SndCreBuf[4] = ETX_C;
+	SndCreBuf[5] = CrcEor(SndCreBuf,5);
+	CreCommand = AUTH_CR;
+	WriteToDBUG_USART(SndCreBuf,6);
+	CreStatus = CRE_Command_Sending;
+
+	// A Record Need To Be Sent, LLLLLA
+	CRESendRecord = 1;
+}
+
+void CreAuthEsc_Dispose(void)
+{
+// LLLLA
+	unsigned char len;
+
+	memset( InfoLine, 0x00, sizeof( InfoLine ));
+
+	len = RevCreBuf[1];
+	len -= 1;
+//	len = strlen((char *)(&RevCreBuf[3]));
+//	if( len > 2 )
+//	{
+//		// Not Include 0xFB And XroC
+//		len -= 2;
+//
+//		if( len > 18 )
+//		{
+//			len = 18;
+//		}
+
+		memcpy( InfoLine, &RevCreBuf[3], len );
+		FillInfoMsg( M_InfoLine, 0, 0 );
+//	}
+// LLLLA End
+
+	ProcExchange[PROCESS_CASH][PROCESS_CR] |= CASH_KEY_CANCELLED;
+
+	SndCreBuf[0] = STX_C;
+	SndCreBuf[1] = 1;
+	SndCreBuf[2] = LOCK_ASK_ESC;
+	SndCreBuf[3] = ETX_C;
+	SndCreBuf[4] = CrcEor(SndCreBuf,4);
+	CreCommand = AUTH_CR;
+	WriteToDBUG_USART(SndCreBuf,5);
+	CreStatus = CRE_Command_Sending;
+}
+
+void CashProcess( void )
+{
+	unsigned char crc;
+	unsigned char command;
+	unsigned char len;
+	
+	if(RevCreFlg == 1)
+	{
+		len = RevCreLen;
+		RevCreLen = 0;
+		if((CreStatus == CRE_Command_Rev) || (CreStatus == CRE_Command_WaitRespose))
+		{
+			crc = CrcEor(RevCreBuf,len);
+			if(crc == 0)
+			{
+				command = RevCreBuf[2];
+				switch(command)
+				{
+				case POLLING:
+					CrePolling_Dispose();
+					break;
+				case ENGROSS:
+					CreEngross_Dispose();
+					break;
+				case SND_RECORD:
+					CreSndRecord_Dispose();
+					break;
+				case CARD_CPDU:
+					break;
+				case WARNING:
+					CreWarning_Dispose();
+					break;
+				case CASH_AMN:
+					break;
+				case CPDU_END:
+					break;
+				case CR_INPUT:
+					CreCrInput_Dispose();
+					break;
+				case AUTH_CR:
+					CreAuthCr_Dispose();
+					break;
+				case LOCK_ASK_ESC:
+					CreAuthEsc_Dispose();
+					break;
+				default:break;
+				}
+			}
+		}
+		else if(CreStatus == CRE_Command_ResposeTimeOut)
+		{
+			CreStatus = CRE_Command_Rev;
+		}
+		RevCreFlg = 0;
+	}
+	if(CreStatus == CRE_Command_WaitCr)
+	{
+		if(ProcExchange[PROCESS_CR][PROCESS_CASH] & CASH_KEY_PRESSED)
+		{
+			if(pCrWait != (Tmr *)0)
+			{
+				DeleteTimer(pCrWait);
+				pCrWait = (Tmr *)0;
+			}
+			SndCreBuf[0] = STX_C;
+			SndCreBuf[1] = 6;
+			SndCreBuf[2] = ENGROSS;
+			SndCreBuf[3] = Cash_CR_Buf.CashCard_Flag;
+			SndCreBuf[4] = Cash_CR_Buf.CashKeyNozzleNumber;
+			SndCreBuf[5] = Cash_CR_Buf.CashNozzleNumber;
+			memcpy(&SndCreBuf[6],Cash_CR_Buf.CashGradeNumber,2);
+			SndCreBuf[8] = ETX_C;
+			SndCreBuf[9] = CrcEor(SndCreBuf,9);
+			CreCommand = ENGROSS;
+			WriteToDBUG_USART(SndCreBuf,10);
+			CreStatus = CRE_Command_Sending;
+			ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_KEY_PRESSED);
+            
+            CrePreCommand = 0;
+     		CrEscOrNoEsc = 0;
+            if(!Cash_CR_Buf.CashCard_Flag)
+            {
+                if(pCrEscTime != (Tmr *)0)
+                {
+                    DeleteTimer(pCrEscTime);
+                    pCrEscTime = (Tmr *)0;
+                }
+                pCrEscTime = CreateTimer(TIMER_ONE,60 * 1000,CrEscTimeOut);
+            }
+		}
+		else if(CrState == 1)
+		{
+			if(pCrWait != (Tmr *)0)
+			{
+				DeleteTimer(pCrWait);
+				pCrWait = (Tmr *)0;
+			}
+			SndCreBuf[0] = STX_C;
+			SndCreBuf[1] = 6;
+			SndCreBuf[2] = ENGROSS;
+			SndCreBuf[3] = Cash_CR_Buf.CashCard_Flag;
+			SndCreBuf[4] = Cash_CR_Buf.CashKeyNozzleNumber;
+			SndCreBuf[5] = Cash_CR_Buf.CashNozzleNumber;
+			memcpy(&SndCreBuf[6],Cash_CR_Buf.CashGradeNumber,2);
+			SndCreBuf[8] = ETX_C;
+			SndCreBuf[9] = CrcEor(SndCreBuf,9);
+			CreCommand = ENGROSS;
+			WriteToDBUG_USART(SndCreBuf,10);
+			CreStatus = CRE_Command_Sending;
+			//ProcExchange[PROCESS_CR][PROCESS_CASH] &= (~CASH_KEY_PRESSED);
+			CrePreCommand = 0;
+		}
+	}
+
+	// Bellow LLLLA
+	if( ProcExchange[PROCESS_POWERDOWN][PROCESS_CASH] & POWERDOWN )
+	{
+		if( CRESendRecord == 1 )
+		{
+			// Do Not Issue Power Down, Wait Send Record End
+		}
+        else
+		{
+        	// Issuer Power Down
+			// Clear Bit
+			ProcExchange[PROCESS_POWERDOWN][PROCESS_CASH] &= ( ~POWERDOWN );
+
+			ProcExchange[PROCESS_CASH][PROCESS_POWERDOWN] |= POWERDOWN;
+		}
+	}
+	// Upper LLLLA
+
+}
+
+#endif

@@ -1,0 +1,157 @@
+[JLinkDriver]
+WatchCond=_ 0
+Watch0=_ 0 "" 0 "" 0 "" 0 "" 0 0 0 0
+Watch1=_ 0 "" 0 "" 0 "" 0 "" 0 0 0 0
+[DebugChecksum]
+Checksum=-1378768381
+[DisAssemblyWindow]
+NumStates=_ 1
+State 1=_ 1
+[InstructionProfiling]
+Enabled=_ 0
+[CodeCoverage]
+Enabled=_ 0
+[Profiling]
+Enabled=0
+[StackPlugin]
+Enabled=1
+OverflowWarningsEnabled=1
+WarningThreshold=90
+SpWarningsEnabled=1
+WarnHow=0
+UseTrigger=1
+TriggerName=main
+LimitSize=0
+ByteLimit=50
+[Interrupts]
+Enabled=1
+[MemoryMap]
+Enabled=0
+Base=0
+UseAuto=0
+TypeViolation=1
+UnspecRange=1
+ActionState=1
+[Stack]
+FillEnabled=0
+OverflowWarningsEnabled=1
+WarningThreshold=90
+SpWarningsEnabled=1
+WarnLogOnly=1
+UseTrigger=1
+TriggerName=main
+LimitSize=0
+ByteLimit=50
+[Exceptions]
+StopOnUncaught=_ 0
+StopOnThrow=_ 0
+[CallStack]
+ShowArgs=0
+[Disassembly]
+MixedMode=1
+
+
+
+
+
+
+
+[struct_types]
+Fmt0=Time-year	4	0
+[array_types]
+Fmt0=unsigned int[11]	4	0
+[watch_formats]
+Fmt0={W}0:ProcStatus[PROCESS_CR]	4	0
+Fmt1={W}0:ProcStatus[PROCESS_PUMP]	4	0
+Fmt2={W}0:TransTTC	4	0
+Fmt3={W}0:retval	4	0
+[Log file]
+LoggingEnabled=_ 0
+LogFile=_ ""
+Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
+[Disassemble mode]
+mode=0
+[Breakpoints]
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\GreyCard.c}.518.2" 0 0 0 0 "" 0 ""
+Bp1=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\GreyCard.c}.518.2" 0 0 0 0 "" 0 ""
+Bp2=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\Journal.c}.1268.4" 0 0 0 0 "" 0 ""
+Bp3=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\Journal.c}.1268.4" 0 0 0 0 "" 0 ""
+Bp4=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\GreyCard.c}.269.7" 0 0 0 0 "" 0 ""
+Bp5=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\Journal.c}.160.1" 0 0 0 0 "" 0 ""
+Bp6=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\Journal.c}.369.1" 0 0 0 0 "" 0 ""
+Bp7=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.1880.14" 0 0 0 0 "" 0 ""
+Bp8=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.1880.14" 0 0 0 0 "" 0 ""
+Bp9=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.1231.13" 0 0 0 0 "" 0 ""
+Bp10=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.3257.15" 0 0 0 0 "" 0 ""
+Bp11=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\testPump.c}.186.2" 0 0 0 0 "" 0 ""
+Bp12=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.712.9" 0 0 0 0 "" 0 ""
+Bp13=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardCommand.c}.1446.5" 0 0 0 0 "" 0 ""
+Bp14=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.555.14" 0 0 0 0 "" 0 ""
+Bp15=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.674.9" 0 0 0 0 "" 0 ""
+Bp16=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.204.29" 0 0 0 0 "" 0 ""
+Bp17=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardProc.c}.309.9" 0 0 0 0 "" 0 ""
+Bp18=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardProc.c}.294.8" 0 0 0 0 "" 0 ""
+Bp19=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.276.5" 0 0 0 0 "" 0 ""
+Bp20=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.102.9" 0 0 0 0 "" 0 ""
+Bp21=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.110.7" 0 0 0 0 "" 0 ""
+Bp22=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.204.29" 0 0 0 0 "" 0 ""
+Bp23=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpEOT.c}.268.7" 0 0 0 0 "" 0 ""
+Bp24=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpEOT.c}.187.6" 0 0 0 0 "" 0 ""
+Bp25=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpEOT.c}.358.7" 0 0 0 0 "" 0 ""
+Bp26=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpEOT.c}.233.7" 0 0 0 0 "" 0 ""
+Bp27=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.1880.14" 0 0 0 0 "" 0 ""
+Bp28=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.1305.8" 0 0 0 0 "" 0 ""
+Bp29=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.868.2" 0 0 0 0 "" 0 ""
+Bp30=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.807.14" 0 0 0 0 "" 0 ""
+Bp31=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.890.2" 0 0 0 0 "" 0 ""
+Bp32=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.619.8" 0 0 0 0 "" 0 ""
+Bp33=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.563.6" 0 0 0 0 "" 0 ""
+Bp34=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.625.7" 0 0 0 0 "" 0 ""
+Bp35=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc2.c}.732.5" 0 0 0 0 "" 0 ""
+Bp36=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardCommand.c}.1993.3" 0 0 0 0 "" 0 ""
+Bp37=_ "STD_CODE" "{$PROJ_DIR$\Application\Project\Include\Pdprotect.h}.13.1" 0 0 0 0 "" 0 ""
+Bp38=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\PSAMCommand.c}.329.2" 0 0 0 0 "" 0 ""
+Bp39=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpBusy.c}.787.1" 0 0 0 0 "" 0 ""
+Bp40=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.2726.3" 0 0 0 0 "" 0 ""
+Bp41=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpBusy.c}.438.7" 0 0 0 0 "" 0 ""
+Bp42=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpBusy.c}.438.7" 0 0 0 0 "" 0 ""
+Bp43=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardCommand.c}.2175.2" 0 0 0 0 "" 0 ""
+Bp44=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.2001.7" 0 0 0 0 "" 0 ""
+Bp45=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Include\CRVaribles.h}.1063.1" 0 0 0 0 "" 0 ""
+Bp46=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.323.11" 0 0 0 0 "" 0 ""
+Bp47=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.343.29" 0 0 0 0 "" 0 ""
+Bp48=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.403.11" 0 0 0 0 "" 0 ""
+Bp49=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.389.19" 0 0 0 0 "" 0 ""
+Bp50=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.442.9" 0 0 0 0 "" 0 ""
+Bp51=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.1545.7" 0 0 0 0 "" 0 ""
+Bp52=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.3204.9" 0 0 0 0 "" 0 ""
+Bp53=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Source\Pump.c}.3276.20" 0 0 0 0 "" 0 ""
+Bp54=_ "STD_CODE" "{$PROJ_DIR$\Application\Project\Include\Pdprotect.h}.210.1" 0 0 0 0 "" 0 ""
+Bp55=_ "STD_CODE" "{$PROJ_DIR$\Application\Pump\Include\Pump.h}.16.1" 0 0 0 0 "" 0 ""
+Bp56=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpEOT.c}.219.8" 0 0 0 0 "" 0 ""
+Bp57=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpBusy.c}.347.7" 0 0 0 0 "" 0 ""
+Bp58=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpBusy.c}.438.7" 0 0 0 0 "" 0 ""
+Bp59=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CardReader.c}.323.2" 0 0 0 0 "" 0 ""
+Bp60=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.1343.7" 0 0 0 0 "" 0 ""
+Bp61=_ "STD_CODE" "{$PROJ_DIR$\Application\Keypad\Source\Keypad.c}.534.8" 0 0 0 0 "" 0 ""
+Bp62=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardCommand.c}.1798.9" 0 0 0 0 "" 0 ""
+Bp63=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.738.6" 0 0 0 0 "" 0 ""
+Bp64=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.825.7" 0 0 0 0 "" 0 ""
+Bp65=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.910.6" 0 0 0 0 "" 0 ""
+Bp66=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.981.10" 0 0 0 0 "" 0 ""
+Bp67=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.1033.5" 0 0 0 0 "" 0 ""
+Bp68=_ "STD_CODE" "{$PROJ_DIR$\Application\Keypad\Source\Keypad.c}.510.6" 0 0 0 0 "" 0 ""
+Bp69=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.1194.7" 0 0 0 0 "" 0 ""
+Bp70=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\ICCardInProc.c}.1227.7" 0 0 0 0 "" 0 ""
+Bp71=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.2013.7" 0 0 0 0 "" 0 ""
+Bp72=_ "STD_CODE" "{$PROJ_DIR$\Application\CardReader\Source\CRPumpCall.c}.499.7" 0 0 0 0 "" 0 ""
+Count=73
+[Aliases]
+Count=0
+SuppressDialog=0
+[TraceHelper]
+Enabled=0
+ShowSource=1
